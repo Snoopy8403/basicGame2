@@ -24,7 +24,7 @@ public class BasicGame {
         String[][] level = new String[height][width];
         initLevel(level);
         addRandomWalls(level, 1, 1);
-
+//test
         for (int iteracionNumber = 1; iteracionNumber <= gameLoopNumber; iteracionNumber++){
             //Player
             //irányváltás
