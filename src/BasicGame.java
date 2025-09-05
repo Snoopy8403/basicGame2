@@ -2,10 +2,10 @@ import java.util.Random;
 
 public class BasicGame {
 
-    static int gameLoopNumber = 100;
-    static int height = 15;
-    static int width = 15;
-    static Random random = new Random();
+    static final int GAME_LOOP_NUMBER = 100;
+    static final int HEIGHT = 15;
+    static final int WIDTH = 15;
+    static final Random RANDOM = new Random();
 
     public static void main(String[] args) throws InterruptedException {
 
@@ -21,11 +21,11 @@ public class BasicGame {
 
 
         //Pálya inicializálása
-        String[][] level = new String[height][width];
+        String[][] level = new String[HEIGHT][WIDTH];
         initLevel(level);
         addRandomWalls(level, 1, 1);
-//test
-        for (int iteracionNumber = 1; iteracionNumber <= gameLoopNumber; iteracionNumber++){
+
+        for (int iteracionNumber = 1; iteracionNumber <= GAME_LOOP_NUMBER; iteracionNumber++){
             //Player
             //irányváltás
             if (iteracionNumber % 15 == 0){
@@ -39,13 +39,14 @@ public class BasicGame {
             //Enemy
             //irányváltás
             if (iteracionNumber % 10 == 0){
-                enemyDirection = changeDirection(enemyDirection);
+                enemyDirection = changeEnemyDirection(level, enemyDirection, playerRow, playerColumn, enemyRow, enemyColumn);
             }
             //Léptetés
-            int[] enemyCoordinates = makeMove(enemyDirection, level, enemyRow, enemyColumn);
-            enemyRow = enemyCoordinates[0];
-            enemyColumn = enemyCoordinates[1];
-
+            if (iteracionNumber%2 == 0) {
+                int[] enemyCoordinates = makeMove(enemyDirection, level, enemyRow, enemyColumn);
+                enemyRow = enemyCoordinates[0];
+                enemyColumn = enemyCoordinates[1];
+            }
 
             //Pálya és játékos kirajzolása
             draw(level, playerMark, playerRow, playerColumn, enemyMark, enemyRow, enemyColumn);
@@ -53,11 +54,28 @@ public class BasicGame {
             //várakozás
             addSomeDelay(iteracionNumber, 200L);
 
+            //kiléptetés ha elérték egymást
             if (playerRow == enemyRow && playerColumn == enemyColumn){
                 break;
             }
         }
             System.out.println("Játék vége!");
+    }
+
+    static Directon changeEnemyDirection(String[][] level, Directon originalEnemyDirection, int playerRow, int playerColumn, int enemyRow, int enemyColumn) {
+    if (playerRow < enemyRow && level[enemyRow-1][enemyColumn].equals(" ")){
+        return Directon.UP;
+    }
+    if (playerRow > enemyRow && level[enemyRow+1][enemyColumn].equals(" ")){
+        return Directon.DOWN;
+    }
+    if (playerColumn < enemyColumn && level[enemyRow][enemyColumn - 1].equals(" ")){
+        return Directon.LEFT;
+    }
+    if (playerColumn > enemyColumn && level[enemyRow][enemyColumn + 1].equals(" ")){
+        return Directon.RIGHT;
+    }
+        return originalEnemyDirection;
     }
 
     static void addRandomWalls(String[][] level, int numberOfHorizontalWalls, int numberOfVerticalWalls){
@@ -70,32 +88,32 @@ public class BasicGame {
     }
 
     static void addHorizontalWall(String[][] level){
-        int wallWidth = random.nextInt(width-3);
-        int wallRow = random.nextInt((height - 2) +1 );
-        int wallColumn = random.nextInt((width - 2) - wallWidth );
+        int wallWidth = RANDOM.nextInt(WIDTH -3);
+        int wallRow = RANDOM.nextInt((HEIGHT - 2) +1 );
+        int wallColumn = RANDOM.nextInt((WIDTH - 2) - wallWidth );
         for (int i = 0; i < wallWidth; i++){
             level[wallRow][wallColumn + i] = "X";
         }
     }
 
     static void addVerticalWall(String[][] level){
-        int wallHeight = random.nextInt(height-3);
-        int wallColumn = random.nextInt((width - 2) +1 );
-        int wallRow = random.nextInt((height - 2) - wallHeight );
+        int wallHeight = RANDOM.nextInt(HEIGHT -3);
+        int wallColumn = RANDOM.nextInt((WIDTH - 2) +1 );
+        int wallRow = RANDOM.nextInt((HEIGHT - 2) - wallHeight );
         for (int i = 0; i < wallHeight; i++){
             level[wallRow + i][wallColumn] = "X";
         }
     }
 
-    private static void addSomeDelay(int k, long timeOut) throws InterruptedException {
+    static void addSomeDelay(int k, long timeOut) throws InterruptedException {
         System.out.println(k + " --------------");
         Thread.sleep(timeOut);
     }
 
-    private static void initLevel(String[][] level) {
+    static void initLevel(String[][] level) {
         for (int row = 0; row < level.length; row++) {
             for (int column = 0; column < level[row].length; column++) {
-                if (row == 0 || row == height-1 || column == 0 || column == width-1) {
+                if (row == 0 || row == HEIGHT -1 || column == 0 || column == WIDTH -1) {
                     level[row][column] = "X";
                 } else {
                     level[row][column] = " ";
