@@ -8,22 +8,29 @@ public class BasicGame {
     static final Random RANDOM = new Random();
 
     public static void main(String[] args) throws InterruptedException {
-
-        String playerMark = "O";
-        int playerRow = 2;
-        int playerColumn = 2;
-        Directon playerDirection = Directon.RIGHT;
-
-        String enemyMark = "-";
-        int enemyRow = 7;
-        int enemyColumn = 4;
-        Directon enemyDirection = Directon.LEFT;
-
-
         //Pálya inicializálása
         String[][] level = new String[HEIGHT][WIDTH];
         initLevel(level);
-        addRandomWalls(level, 1, 1);
+        addRandomWalls(level);
+
+        String playerMark = "O";
+        int[] playerStartingCoordinates = getRandomStartingCoordinates(level);
+        int playerRow = playerStartingCoordinates[0];
+        int playerColumn = playerStartingCoordinates[1];
+        Directon playerDirection = Directon.RIGHT;
+
+        String enemyMark = "-";
+        int[] enemyStartingCoordinates = getRandomStartingCoordinatesAtDistance(level, playerStartingCoordinates, 10);
+        int enemyRow = enemyStartingCoordinates[0];
+        int enemyColumn = enemyStartingCoordinates[1];
+        Directon enemyDirection = Directon.LEFT;
+
+        String powerUpMark = "*";
+        int[] powerUpStartingCoordinates = getRandomStartingCoordinates(level);
+        int powerUpRow = powerUpStartingCoordinates[0];
+        int powerUpColumn = powerUpStartingCoordinates[1];
+        boolean powerUpPresentOnLevel = false;
+        int powerUpPresentsCounter = 0;
 
         for (int iteracionNumber = 1; iteracionNumber <= GAME_LOOP_NUMBER; iteracionNumber++){
             //Player
@@ -48,8 +55,20 @@ public class BasicGame {
                 enemyColumn = enemyCoordinates[1];
             }
 
+            //powerup frissitése
+            powerUpPresentsCounter++;
+            if (powerUpPresentsCounter >= 20){
+                if (powerUpPresentOnLevel){
+                    powerUpStartingCoordinates = getRandomStartingCoordinates(level);
+                    powerUpRow = powerUpStartingCoordinates[0];
+                    powerUpColumn = powerUpStartingCoordinates[1];
+                }
+                powerUpPresentOnLevel = !powerUpPresentOnLevel;
+                powerUpPresentsCounter = 0;
+            }
+
             //Pálya és játékos kirajzolása
-            draw(level, playerMark, playerRow, playerColumn, enemyMark, enemyRow, enemyColumn);
+            draw(level, playerMark, playerRow, playerColumn, enemyMark, enemyRow, enemyColumn, powerUpMark, powerUpRow, powerUpColumn, powerUpPresentOnLevel);
 
             //várakozás
             addSomeDelay(iteracionNumber, 200L);
@@ -61,6 +80,39 @@ public class BasicGame {
         }
             System.out.println("Játék vége!");
     }
+
+    static int[] getRandomStartingCoordinatesAtDistance(String[][] level, int[] playerStartingCoordinates, int distance) {
+        int playerStartingRow = playerStartingCoordinates[0];
+        int playerStartingColumn = playerStartingCoordinates[1];
+        int randomRow;
+        int randomColumn;
+        int counter = 0;
+        do {
+            randomRow = RANDOM.nextInt(HEIGHT);
+            randomColumn = RANDOM.nextInt(WIDTH);
+        } while (counter++ < 1_000 &&
+                (!level[randomRow][randomColumn].equals(" ") ||
+                        calculateDistance(randomRow, randomColumn, playerStartingRow, playerStartingColumn) < distance));
+        return new int[]{randomRow, randomColumn};
+    }
+
+    static int calculateDistance(int row1, int column1, int row2, int column2) {
+        int rowDifference = Math.abs(row1 - row2);
+        int columnDifference = Math.abs(column1 - column2);
+        return rowDifference + columnDifference;
+    }
+
+    static int[] getRandomStartingCoordinates(String[][] level) {
+        int randomRow;
+        int randomColumn;
+        do {
+            randomRow = RANDOM.nextInt(HEIGHT);
+            randomColumn = RANDOM.nextInt(WIDTH);
+        } while (!level[randomRow][randomColumn].equals(" "));
+        return new int[]{randomRow, randomColumn};
+    }
+
+
 
     static Directon changeEnemyDirection(String[][] level, Directon originalEnemyDirection, int playerRow, int playerColumn, int enemyRow, int enemyColumn) {
     if (playerRow < enemyRow && level[enemyRow-1][enemyColumn].equals(" ")){
@@ -76,6 +128,10 @@ public class BasicGame {
         return Directon.RIGHT;
     }
         return originalEnemyDirection;
+    }
+
+    static void addRandomWalls(String[][] level){
+        addRandomWalls(level, 3, 2);
     }
 
     static void addRandomWalls(String[][] level, int numberOfHorizontalWalls, int numberOfVerticalWalls){
@@ -136,13 +192,15 @@ public class BasicGame {
         return directon;
     }
 
-    static void draw(String[][] board, String playerMark, int playerRow, int playerColumn, String enemyMark, int enemyRow, int enemyColumn){
+    static void draw(String[][] board, String playerMark, int playerRow, int playerColumn, String enemyMark, int enemyRow, int enemyColumn, String powerUpMark, int powerUpRow, int powerUpColumn, boolean powerUpPresentOnLevel){
          for (int row = 0; row < board.length; row++) {
              for (int column = 0; column < board[row].length; column++) {
                  if (row == playerRow && column == playerColumn) {
                      System.out.print(playerMark);
                  } else if (row == enemyRow && column == enemyColumn) {
                      System.out.print(enemyMark);
+                 } else if (powerUpPresentOnLevel && (row == powerUpRow && column == powerUpColumn)) {
+                     System.out.print(powerUpMark);
                  } else {
                      System.out.print(board[row][column]);
                  }
