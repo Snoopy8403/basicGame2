@@ -1,3 +1,5 @@
+import javax.xml.transform.Source;
+import java.sql.SQLOutput;
 import java.util.Random;
 
 public class BasicGame {
@@ -31,23 +33,40 @@ public class BasicGame {
         int powerUpColumn = powerUpStartingCoordinates[1];
         boolean powerUpPresentOnLevel = false;
         int powerUpPresentsCounter = 0;
+        boolean powerUpActive = false;
+        int powerUpActiveCounter = 0;
+        GameResult gameResult = GameResult.TIE;
 
         for (int iteracionNumber = 1; iteracionNumber <= GAME_LOOP_NUMBER; iteracionNumber++){
             //Player
             //irányváltás
-            if (iteracionNumber % 15 == 0){
-                playerDirection = changeDirection(playerDirection);
+            if (powerUpActive){
+                playerDirection = changeDirectionTowards(level, playerDirection, playerRow, playerColumn, enemyRow, enemyColumn);
             }
-            //Léptetés
+            else {
+                if (powerUpPresentOnLevel){
+                    playerDirection = changeDirectionTowards(level, playerDirection, playerRow, playerColumn, powerUpRow, powerUpColumn);
+                }
+                if (iteracionNumber % 15 == 0) {
+                    playerDirection = changeDirection(playerDirection);
+                }
+            }
+
+            //ellenfél Léptetés
             int[] playerCoordinates = makeMove(playerDirection, level, playerRow, playerColumn);
             playerRow = playerCoordinates[0];
             playerColumn = playerCoordinates[1];
 
             //Enemy
             //irányváltás
-            if (iteracionNumber % 10 == 0){
-                enemyDirection = changeEnemyDirection(level, enemyDirection, playerRow, playerColumn, enemyRow, enemyColumn);
+
+            if (powerUpActive){
+                Directon directionTowardsPlayer = changeDirectionTowards(level, enemyDirection, enemyRow, enemyColumn, playerRow, playerColumn);
+                enemyDirection = getEscapeDirection(level, enemyRow, enemyColumn, directionTowardsPlayer);
+            }else {
+                enemyDirection = changeDirectionTowards(level, enemyDirection, enemyRow, enemyColumn, playerRow, playerColumn);
             }
+
             //Léptetés
             if (iteracionNumber%2 == 0) {
                 int[] enemyCoordinates = makeMove(enemyDirection, level, enemyRow, enemyColumn);
@@ -56,7 +75,12 @@ public class BasicGame {
             }
 
             //powerup frissitése
-            powerUpPresentsCounter++;
+            if (powerUpActive){
+                powerUpActiveCounter++;
+            }
+            else {
+                powerUpPresentsCounter++;
+            }
             if (powerUpPresentsCounter >= 20){
                 if (powerUpPresentOnLevel){
                     powerUpStartingCoordinates = getRandomStartingCoordinates(level);
@@ -66,19 +90,107 @@ public class BasicGame {
                 powerUpPresentOnLevel = !powerUpPresentOnLevel;
                 powerUpPresentsCounter = 0;
             }
+            if (powerUpActiveCounter >= 20){
+                powerUpActive = false;
+                powerUpActiveCounter = 0;
+                powerUpStartingCoordinates = getRandomStartingCoordinates(level);
+                powerUpRow = powerUpStartingCoordinates[0];
+                powerUpColumn = powerUpStartingCoordinates[1];
+            }
+
+            //power up interaction the player
+            if (powerUpPresentOnLevel && playerRow == powerUpRow && playerColumn == powerUpColumn)
+            {
+                powerUpActive = true;
+                powerUpPresentOnLevel = false;
+                powerUpActiveCounter = 0;
+            }
 
             //Pálya és játékos kirajzolása
-            draw(level, playerMark, playerRow, playerColumn, enemyMark, enemyRow, enemyColumn, powerUpMark, powerUpRow, powerUpColumn, powerUpPresentOnLevel);
+            draw(level, playerMark, playerRow, playerColumn, enemyMark, enemyRow, enemyColumn, powerUpMark, powerUpRow, powerUpColumn, powerUpPresentOnLevel, powerUpActive);
 
             //várakozás
             addSomeDelay(iteracionNumber, 200L);
 
             //kiléptetés ha elérték egymást
             if (playerRow == enemyRow && playerColumn == enemyColumn){
+                if (powerUpActive){
+                    gameResult = GameResult.WIN;
+                }else {
+                    gameResult = GameResult.LOSE;
+                }
                 break;
             }
         }
-            System.out.println("Játék vége!");
+
+        switch (gameResult) {
+            case WIN:
+            System.out.println("Gratulálok, győztél!"); break;
+            case LOSE:
+            System.out.println("Sajnálom, vesztettél");break;
+            case TIE:
+                System.out.println("Döntetlen");break;
+        }
+    }
+
+    static Directon getEscapeDirection(String[][] level, int enemyRow, int enemyColumn, Directon directionTowardsPlayer) {
+        Directon escapeDirection = getOppositeDirection(directionTowardsPlayer);
+        switch (escapeDirection){
+            case UP: if (level[enemyRow - 1][enemyColumn].equals(" ")){
+                return Directon.UP;
+            } else if (level[enemyRow][enemyColumn - 1].equals(" ")) {
+                return Directon.LEFT;
+            } else if (level[enemyRow][enemyColumn + 1].equals(" ")) {
+                return Directon.RIGHT;
+            } else {
+                return Directon.UP;
+            }
+
+            case DOWN: if (level[enemyRow + 1][enemyColumn].equals(" ")){
+                return Directon.DOWN;
+            } else if (level[enemyRow][enemyColumn - 1].equals(" ")) {
+                return Directon.LEFT;
+            } else if (level[enemyRow][enemyColumn + 1].equals(" ")) {
+                return Directon.RIGHT;
+            } else {
+                return Directon.DOWN;
+            }
+
+
+            case RIGHT: if (level[enemyRow][enemyColumn + 1].equals(" ")){
+                return Directon.RIGHT;
+            } else if (level[enemyRow - 1][enemyColumn].equals(" ")) {
+                return Directon.UP;
+            } else if (level[enemyRow + 1][enemyColumn].equals(" ")) {
+                return Directon.DOWN;
+            } else {
+                return Directon.RIGHT;
+            }
+
+
+            case LEFT: if (level[enemyRow][enemyColumn - 1].equals(" ")){
+                return Directon.LEFT;
+            } else if (level[enemyRow - 1][enemyColumn].equals(" ")) {
+                return Directon.UP;
+            } else if (level[enemyRow + 1][enemyColumn].equals(" ")) {
+                return Directon.DOWN;
+            } else {
+                return Directon.LEFT;
+            }
+
+            default: return escapeDirection;
+        }
+    }
+
+    static Directon getOppositeDirection(Directon direction) {
+
+        switch (direction){
+            case UP: return Directon.DOWN;
+            case DOWN: return Directon.UP;
+            case LEFT: return Directon.RIGHT;
+            case RIGHT: return Directon.LEFT;
+            default: return direction;
+        }
     }
 
     static int[] getRandomStartingCoordinatesAtDistance(String[][] level, int[] playerStartingCoordinates, int distance) {
@@ -114,7 +226,7 @@ public class BasicGame {
 
 
 
-    static Directon changeEnemyDirection(String[][] level, Directon originalEnemyDirection, int playerRow, int playerColumn, int enemyRow, int enemyColumn) {
+    static Directon changeDirectionTowards(String[][] level, Directon originalEnemyDirection, int enemyRow, int enemyColumn, int playerRow, int playerColumn) {
     if (playerRow < enemyRow && level[enemyRow-1][enemyColumn].equals(" ")){
         return Directon.UP;
     }
@@ -192,7 +304,7 @@ public class BasicGame {
         return directon;
     }
 
-    static void draw(String[][] board, String playerMark, int playerRow, int playerColumn, String enemyMark, int enemyRow, int enemyColumn, String powerUpMark, int powerUpRow, int powerUpColumn, boolean powerUpPresentOnLevel){
+    static void draw(String[][] board, String playerMark, int playerRow, int playerColumn, String enemyMark, int enemyRow, int enemyColumn, String powerUpMark, int powerUpRow, int powerUpColumn, boolean powerUpPresentOnLevel, boolean powerUpActive){
          for (int row = 0; row < board.length; row++) {
              for (int column = 0; column < board[row].length; column++) {
                  if (row == playerRow && column == playerColumn) {
@@ -206,6 +318,9 @@ public class BasicGame {
                  }
              }
              System.out.println();
+             if (powerUpActive) {
+                 System.out.println("Powerup active!");
+             }
          }
      }
 
