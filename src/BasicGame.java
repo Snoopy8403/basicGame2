@@ -156,7 +156,6 @@ public class BasicGame {
                 return Directon.DOWN;
             }
 
-
             case RIGHT: if (level[enemyRow][enemyColumn + 1].equals(" ")){
                 return Directon.RIGHT;
             } else if (level[enemyRow - 1][enemyColumn].equals(" ")) {
@@ -167,7 +166,6 @@ public class BasicGame {
                 return Directon.RIGHT;
             }
 
-
             case LEFT: if (level[enemyRow][enemyColumn - 1].equals(" ")){
                 return Directon.LEFT;
             } else if (level[enemyRow - 1][enemyColumn].equals(" ")) {
@@ -177,7 +175,6 @@ public class BasicGame {
             } else {
                 return Directon.LEFT;
             }
-
             default: return escapeDirection;
         }
     }
@@ -223,8 +220,6 @@ public class BasicGame {
         } while (!level[randomRow][randomColumn].equals(" "));
         return new int[]{randomRow, randomColumn};
     }
-
-
 
     static Directon changeDirectionTowards(String[][] level, Directon originalEnemyDirection, int enemyRow, int enemyColumn, int playerRow, int playerColumn) {
     if (playerRow < enemyRow && level[enemyRow-1][enemyColumn].equals(" ")){
@@ -318,10 +313,9 @@ public class BasicGame {
                  }
              }
              System.out.println();
-             if (powerUpActive) {
-                 System.out.println("Powerup active!");
-             }
-         }
+         }             if (powerUpActive) {
+            System.out.println("Powerup active!");
+        }
      }
 
      static int[] makeMove(Directon directon,String[][] level, int row, int column){
@@ -347,7 +341,6 @@ public class BasicGame {
                  }
                  break;
          }
-
          return new int[] {row, column};
      }
 }
