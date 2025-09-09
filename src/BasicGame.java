@@ -5,15 +5,17 @@ import java.util.Random;
 public class BasicGame {
 
     static final int GAME_LOOP_NUMBER = 100;
-    static final int HEIGHT = 15;
-    static final int WIDTH = 15;
-    static final Random RANDOM = new Random();
+    static final int HEIGHT = 40;
+    static final int WIDTH = 40;
+    static final Random RANDOM = new Random(103L);
 
     public static void main(String[] args) throws InterruptedException {
         //Pálya inicializálása
         String[][] level = new String[HEIGHT][WIDTH];
-        initLevel(level);
-        addRandomWalls(level);
+        do {
+            initLevel(level);
+            addRandomWalls(level);
+        }while (!isPassable(level));
 
         String playerMark = "O";
         int[] playerStartingCoordinates = getRandomStartingCoordinates(level);
@@ -133,6 +135,62 @@ public class BasicGame {
         }
     }
 
+    static boolean isPassable(String[][] level) {
+        //PÁLYA lemásolása
+        String[][] levelCopy = copy(level);
+
+        //Első szóköz és csillaggal helyettesítése
+        outer:
+        for (int row = 0; row < HEIGHT; row++){
+            for (int column = 0; column < WIDTH; column++){
+                if (" ".equals(levelCopy[row][column])){
+                    levelCopy[row][column] = "*";
+                    break outer;
+                }
+            }
+        }
+
+        //A csillag melletti szóközök csillagal helyettesítése
+        for (int row = 0; row < HEIGHT; row++){
+            for (int column = 0; column < WIDTH; column++){
+                if ("*".equals(levelCopy[row][column])){
+                    if (" ".equals(levelCopy[row - 1][column])){
+                        levelCopy[row - 1][column] = "*";
+                    }
+                    if (" ".equals(levelCopy[row + 1][column])){
+                        levelCopy[row + 1][column] = "*";
+                    }
+                    if (" ".equals(levelCopy[row][column - 1])){
+                        levelCopy[row][column - 1] = "*";
+                    }
+                    if (" ".equals(levelCopy[row][column + 1])){
+                        levelCopy[row][column + 1] = "*";
+                    }
+                }
+            }
+        }
+
+        //Pálya kirajzolása
+        for (int row = 0; row < HEIGHT; row++){
+            for (int column = 0; column < WIDTH; column++){
+                System.out.print(levelCopy[row][column]);
+            }
+            System.out.println();
+        }
+        System.exit(0);
+        return false;
+    }
+
+    static String[][] copy(String[][] level){
+        String[][] copy = new String[HEIGHT][WIDTH];
+        for (int row = 0; row < HEIGHT; row++){
+            for (int column = 0; column < WIDTH; column++){
+                copy[row][column] = level[row][column];
+            }
+        }
+        return copy;
+    }
+
     static Directon getEscapeDirection(String[][] level, int enemyRow, int enemyColumn, Directon directionTowardsPlayer) {
         Directon escapeDirection = getOppositeDirection(directionTowardsPlayer);
         switch (escapeDirection){
@@ -238,7 +296,7 @@ public class BasicGame {
     }
 
     static void addRandomWalls(String[][] level){
-        addRandomWalls(level, 3, 2);
+        addRandomWalls(level, 5, 5);
     }
 
     static void addRandomWalls(String[][] level, int numberOfHorizontalWalls, int numberOfVerticalWalls){
