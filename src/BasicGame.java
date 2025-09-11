@@ -1,5 +1,3 @@
-import javax.xml.transform.Source;
-import java.sql.SQLOutput;
 import java.util.Random;
 
 public class BasicGame {
@@ -17,7 +15,7 @@ public class BasicGame {
             counter++;
             initLevel(level);
             addRandomWalls(level);
-        }while (!isPassable(level));
+        } while (!isPassable(level));
 
         System.out.println("Pálya inicializálások száma: " + counter);
         isPassable(level, true);
@@ -27,11 +25,19 @@ public class BasicGame {
         int playerRow = playerStartingCoordinates[0];
         int playerColumn = playerStartingCoordinates[1];
         Directon playerDirection = Directon.RIGHT;
+        int[] playerEscapeCoordinates = getFarthestCorner(level, playerRow, playerColumn);
+        int playerEscapeRow = playerEscapeCoordinates[0];
+        int playerEscapeColumn = playerEscapeCoordinates[1];
 
         String enemyMark = "-";
         int[] enemyStartingCoordinates = getRandomStartingCoordinatesAtDistance(level, playerStartingCoordinates, 10);
         int enemyRow = enemyStartingCoordinates[0];
         int enemyColumn = enemyStartingCoordinates[1];
+
+        int[] enemyEscapeCoordinates = getFarthestCorner(level, enemyRow, enemyColumn);
+        int enemyEscapeRow = enemyEscapeCoordinates[0];
+        int enemyEscapeColumn = enemyEscapeCoordinates[1];
+
         Directon enemyDirection = Directon.LEFT;
 
         String powerUpMark = "*";
@@ -44,20 +50,21 @@ public class BasicGame {
         int powerUpActiveCounter = 0;
         GameResult gameResult = GameResult.TIE;
 
-        for (int iteracionNumber = 1; iteracionNumber <= GAME_LOOP_NUMBER; iteracionNumber++){
+        for (int iteracionNumber = 1; iteracionNumber <= GAME_LOOP_NUMBER; iteracionNumber++) {
             //Player
             //irányváltás
-            if (powerUpActive){
-                //playerDirection = changeDirectionTowards(level, playerDirection, playerRow, playerColumn, enemyRow, enemyColumn);
+            if (powerUpActive) {
                 playerDirection = getShortestPath(level, playerDirection, playerRow, playerColumn, enemyRow, enemyColumn);
-            }
-            else {
-                if (powerUpPresentOnLevel){
-                    //playerDirection = changeDirectionTowards(level, playerDirection, playerRow, playerColumn, powerUpRow, powerUpColumn);
+            } else {
+                if (powerUpPresentOnLevel) {
                     playerDirection = getShortestPath(level, playerDirection, playerRow, playerColumn, powerUpRow, powerUpColumn);
-                }
-                if (iteracionNumber % 15 == 0) {
-                    playerDirection = changeDirection(playerDirection);
+                } else {
+                    if (iteracionNumber % 100 == 0) {
+                        playerEscapeCoordinates = getFarthestCorner(level, playerRow, playerColumn);
+                        playerEscapeRow = playerEscapeCoordinates[0];
+                        playerEscapeColumn = playerEscapeCoordinates[1];
+                    }
+                    playerDirection = getShortestPath(level, playerDirection, playerRow, playerColumn, playerEscapeRow, playerEscapeColumn);
                 }
             }
 
@@ -68,30 +75,34 @@ public class BasicGame {
 
             //Ellenfél irányváltás
 
-            if (powerUpActive){
-                Directon directionTowardsPlayer = changeDirectionTowards(level, enemyDirection, enemyRow, enemyColumn, playerRow, playerColumn);
-                enemyDirection = getEscapeDirection(level, enemyRow, enemyColumn, directionTowardsPlayer);
-            }else {
-                //enemyDirection = changeDirectionTowards(level, enemyDirection, enemyRow, enemyColumn, playerRow, playerColumn);
+            if (powerUpActive) {
+
+                if (iteracionNumber % 100 == 0) {
+                    enemyEscapeCoordinates = getFarthestCorner(level, enemyRow, enemyColumn);
+                    enemyEscapeRow = enemyEscapeCoordinates[0];
+                    enemyEscapeColumn = enemyEscapeCoordinates[1];
+                }
+                enemyDirection = getShortestPath(level, enemyDirection, enemyRow, enemyColumn, enemyEscapeRow, enemyEscapeColumn);
+
+            } else {
                 enemyDirection = getShortestPath(level, enemyDirection, enemyRow, enemyColumn, playerRow, playerColumn);
             }
 
             //Léptetés
-            if (iteracionNumber%2 == 0) {
+            if (iteracionNumber % 2 == 0) {
                 int[] enemyCoordinates = makeMove(enemyDirection, level, enemyRow, enemyColumn);
                 enemyRow = enemyCoordinates[0];
                 enemyColumn = enemyCoordinates[1];
             }
 
             //powerup frissitése
-            if (powerUpActive){
+            if (powerUpActive) {
                 powerUpActiveCounter++;
-            }
-            else {
+            } else {
                 powerUpPresentsCounter++;
             }
-            if (powerUpPresentsCounter >= 60){
-                if (powerUpPresentOnLevel){
+            if (powerUpPresentsCounter >= 60) {
+                if (powerUpPresentOnLevel) {
                     powerUpStartingCoordinates = getRandomStartingCoordinates(level);
                     powerUpRow = powerUpStartingCoordinates[0];
                     powerUpColumn = powerUpStartingCoordinates[1];
@@ -99,20 +110,25 @@ public class BasicGame {
                 powerUpPresentOnLevel = !powerUpPresentOnLevel;
                 powerUpPresentsCounter = 0;
             }
-            if (powerUpActiveCounter >= 60){
+            if (powerUpActiveCounter >= 60) {
                 powerUpActive = false;
                 powerUpActiveCounter = 0;
                 powerUpStartingCoordinates = getRandomStartingCoordinates(level);
                 powerUpRow = powerUpStartingCoordinates[0];
                 powerUpColumn = powerUpStartingCoordinates[1];
+                playerEscapeCoordinates = getFarthestCorner(level, playerRow, playerColumn);
+                playerEscapeRow = playerEscapeCoordinates[0];
+                playerEscapeColumn = playerEscapeCoordinates[1];
             }
 
             //power up interaction the player
-            if (powerUpPresentOnLevel && playerRow == powerUpRow && playerColumn == powerUpColumn)
-            {
+            if (powerUpPresentOnLevel && playerRow == powerUpRow && playerColumn == powerUpColumn) {
                 powerUpActive = true;
                 powerUpPresentOnLevel = false;
                 powerUpActiveCounter = 0;
+                enemyEscapeCoordinates = getFarthestCorner(level, enemyRow, enemyColumn);
+                enemyEscapeRow = enemyEscapeCoordinates[0];
+                enemyEscapeColumn = enemyEscapeCoordinates[1];
             }
 
             //Pálya és játékos kirajzolása
@@ -122,10 +138,10 @@ public class BasicGame {
             addSomeDelay(iteracionNumber, 200L);
 
             //kiléptetés ha elérték egymást
-            if (playerRow == enemyRow && playerColumn == enemyColumn){
-                if (powerUpActive){
+            if (playerRow == enemyRow && playerColumn == enemyColumn) {
+                if (powerUpActive) {
                     gameResult = GameResult.WIN;
-                }else {
+                } else {
                     gameResult = GameResult.LOSE;
                 }
                 break;
@@ -134,12 +150,37 @@ public class BasicGame {
 
         switch (gameResult) {
             case WIN:
-            System.out.println("Gratulálok, győztél!"); break;
+                System.out.println("Gratulálok, győztél!");
+                break;
             case LOSE:
-            System.out.println("Sajnálom, vesztettél");break;
+                System.out.println("Sajnálom, vesztettél");
+                break;
             case TIE:
-                System.out.println("Döntetlen");break;
+                System.out.println("Döntetlen");
+                break;
         }
+    }
+
+    private static int[] getFarthestCorner(String[][] level, int fromRow, int fromColumn) {
+        String[][] levelCopy = copy(level);
+        levelCopy[fromRow][fromColumn] = "*";
+
+        int farthestRow = 0;
+        int farthestColumn = 0;
+        while (isSpreadAsterixWithCheck(levelCopy)) {
+            outer:
+            for (int row = 0; row < HEIGHT; row++) {
+                for (int column = 0; column < WIDTH; column++) {
+                    if (" ".equals(levelCopy[row][column])) {
+                        farthestRow = row;
+                        farthestColumn = column;
+                        break outer;
+                    }
+                }
+            }
+        }
+
+        return new int[]{farthestRow, farthestColumn};
     }
 
     static Directon getShortestPath(String[][] level, Directon defaultDirection, int fromRow, int fromColumn, int toRow, int toColumn) {
@@ -150,41 +191,25 @@ public class BasicGame {
         levelCopy[toRow][toColumn] = "*";
 
         //csillagok terjesztése
-        while (isSpreadAsterixWithCheck(levelCopy)){
+        while (isSpreadAsterixWithCheck(levelCopy)) {
 
-                //Pálya kirajzolása
-                for (int row = 0; row < HEIGHT; row++){
-                    for (int column = 0; column < WIDTH; column++){
-                        System.out.print(levelCopy[row][column]);
-                    }
-                    System.out.println();
-                    try {
-                        Thread.sleep(10_000L);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-
-
-            if ("*".equals(levelCopy[fromRow - 1][fromColumn])){
+            if ("*".equals(levelCopy[fromRow - 1][fromColumn])) {
                 return Directon.UP;
             }
-            if ("*".equals(levelCopy[fromRow + 1][fromColumn])){
+            if ("*".equals(levelCopy[fromRow + 1][fromColumn])) {
                 return Directon.DOWN;
             }
-            if ("*".equals(levelCopy[fromRow][fromColumn - 1])){
+            if ("*".equals(levelCopy[fromRow][fromColumn - 1])) {
                 return Directon.LEFT;
             }
-            if ("*".equals(levelCopy[fromRow][fromColumn + 1])){
+            if ("*".equals(levelCopy[fromRow][fromColumn + 1])) {
                 return Directon.RIGHT;
             }
         }
-
         return defaultDirection;
     }
 
-
-    static boolean isPassable(String[][] level){
+    static boolean isPassable(String[][] level) {
         return isPassable(level, false);
     }
 
@@ -194,9 +219,9 @@ public class BasicGame {
 
         //Első szóköz és csillaggal helyettesítése
         outer:
-        for (int row = 0; row < HEIGHT; row++){
-            for (int column = 0; column < WIDTH; column++){
-                if (" ".equals(levelCopy[row][column])){
+        for (int row = 0; row < HEIGHT; row++) {
+            for (int column = 0; column < WIDTH; column++) {
+                if (" ".equals(levelCopy[row][column])) {
                     levelCopy[row][column] = "*";
                     break outer;
                 }
@@ -204,99 +229,87 @@ public class BasicGame {
         }
 
         //csillagok terjesztése
-        while (spreadAsterix(levelCopy)){
-            if (draw){
-                //Pálya kirajzolása
-                for (int row = 0; row < HEIGHT; row++){
-                    for (int column = 0; column < WIDTH; column++){
-                        System.out.print(levelCopy[row][column]);
-                    }
-                    System.out.println();
-                }
-            }
+        while (spreadAsterix(levelCopy)) {
         }
 
-        for (int row = 0; row < HEIGHT; row++){
-            for (int column = 0; column < WIDTH; column++){
-                if (" ".equals(levelCopy[row][column])){
+        for (int row = 0; row < HEIGHT; row++) {
+            for (int column = 0; column < WIDTH; column++) {
+                if (" ".equals(levelCopy[row][column])) {
                     return false;
                 }
             }
         }
-
         return true;
     }
 
     static boolean isSpreadAsterixWithCheck(String[][] levelCopy) {
         boolean[][] mask = new boolean[HEIGHT][WIDTH];
-        for (int row = 0; row < HEIGHT; row++){
-            for (int column = 0; column < WIDTH; column++){
-                if ("*".equals(levelCopy[row][column])){
+        for (int row = 0; row < HEIGHT; row++) {
+            for (int column = 0; column < WIDTH; column++) {
+                if ("*".equals(levelCopy[row][column])) {
                     mask[row][column] = true;
                 }
             }
         }
 
         boolean changed = false;
-        for (int row = 0; row < HEIGHT; row++){
-            for (int column = 0; column < WIDTH; column++){
-                if ("*".equals(levelCopy[row][column]) && mask[row][column]){
-                    if (" ".equals(levelCopy[row - 1][column])){
+        for (int row = 0; row < HEIGHT; row++) {
+            for (int column = 0; column < WIDTH; column++) {
+                if ("*".equals(levelCopy[row][column]) && mask[row][column]) {
+                    if (" ".equals(levelCopy[row - 1][column])) {
                         levelCopy[row - 1][column] = "*";
                         changed = true;
                     }
-                    if (" ".equals(levelCopy[row + 1][column])){
+                    if (" ".equals(levelCopy[row + 1][column])) {
                         levelCopy[row + 1][column] = "*";
                         changed = true;
                     }
-                    if (" ".equals(levelCopy[row][column - 1])){
+                    if (" ".equals(levelCopy[row][column - 1])) {
                         levelCopy[row][column - 1] = "*";
                         changed = true;
                     }
-                    if (" ".equals(levelCopy[row][column + 1])){
+                    if (" ".equals(levelCopy[row][column + 1])) {
                         levelCopy[row][column + 1] = "*";
                         changed = true;
                     }
                 }
             }
         }
-        return false;
-    }
-
-
-    //A csillag melletti szóközök csillagal helyettesítése
-    static boolean spreadAsterix(String[][] levelCopy) {
-    boolean changed = false;
-        for (int row = 0; row < HEIGHT; row++){
-            for (int column = 0; column < WIDTH; column++){
-                if ("*".equals(levelCopy[row][column])){
-                    if (" ".equals(levelCopy[row - 1][column])){
-                        levelCopy[row - 1][column] = "*";
-                        changed = true;
-                    }
-                    if (" ".equals(levelCopy[row + 1][column])){
-                        levelCopy[row + 1][column] = "*";
-                        changed = true;
-                    }
-                    if (" ".equals(levelCopy[row][column - 1])){
-                        levelCopy[row][column - 1] = "*";
-                        changed = true;
-                    }
-                    if (" ".equals(levelCopy[row][column + 1])){
-                        levelCopy[row][column + 1] = "*";
-                        changed = true;
-                    }
-                }
-            }
-        }
-
         return changed;
     }
 
-    static String[][] copy(String[][] level){
+    //A csillag melletti szóközök csillagal helyettesítése
+    static boolean spreadAsterix(String[][] levelCopy) {
+        boolean changed = false;
+        for (int row = 0; row < HEIGHT; row++) {
+            for (int column = 0; column < WIDTH; column++) {
+                if ("*".equals(levelCopy[row][column])) {
+                    if (" ".equals(levelCopy[row - 1][column])) {
+                        levelCopy[row - 1][column] = "*";
+                        changed = true;
+                    }
+                    if (" ".equals(levelCopy[row + 1][column])) {
+                        levelCopy[row + 1][column] = "*";
+                        changed = true;
+                    }
+                    if (" ".equals(levelCopy[row][column - 1])) {
+                        levelCopy[row][column - 1] = "*";
+                        changed = true;
+                    }
+                    if (" ".equals(levelCopy[row][column + 1])) {
+                        levelCopy[row][column + 1] = "*";
+                        changed = true;
+                    }
+                }
+            }
+        }
+        return changed;
+    }
+
+    static String[][] copy(String[][] level) {
         String[][] copy = new String[HEIGHT][WIDTH];
-        for (int row = 0; row < HEIGHT; row++){
-            for (int column = 0; column < WIDTH; column++){
+        for (int row = 0; row < HEIGHT; row++) {
+            for (int column = 0; column < WIDTH; column++) {
                 copy[row][column] = level[row][column];
             }
         }
@@ -305,58 +318,67 @@ public class BasicGame {
 
     static Directon getEscapeDirection(String[][] level, int enemyRow, int enemyColumn, Directon directionTowardsPlayer) {
         Directon escapeDirection = getOppositeDirection(directionTowardsPlayer);
-        switch (escapeDirection){
-            case UP: if (level[enemyRow - 1][enemyColumn].equals(" ")){
-                return Directon.UP;
-            } else if (level[enemyRow][enemyColumn - 1].equals(" ")) {
-                return Directon.LEFT;
-            } else if (level[enemyRow][enemyColumn + 1].equals(" ")) {
-                return Directon.RIGHT;
-            } else {
-                return Directon.UP;
-            }
+        switch (escapeDirection) {
+            case UP:
+                if (level[enemyRow - 1][enemyColumn].equals(" ")) {
+                    return Directon.UP;
+                } else if (level[enemyRow][enemyColumn - 1].equals(" ")) {
+                    return Directon.LEFT;
+                } else if (level[enemyRow][enemyColumn + 1].equals(" ")) {
+                    return Directon.RIGHT;
+                } else {
+                    return Directon.UP;
+                }
 
-            case DOWN: if (level[enemyRow + 1][enemyColumn].equals(" ")){
-                return Directon.DOWN;
-            } else if (level[enemyRow][enemyColumn - 1].equals(" ")) {
-                return Directon.LEFT;
-            } else if (level[enemyRow][enemyColumn + 1].equals(" ")) {
-                return Directon.RIGHT;
-            } else {
-                return Directon.DOWN;
-            }
+            case DOWN:
+                if (level[enemyRow + 1][enemyColumn].equals(" ")) {
+                    return Directon.DOWN;
+                } else if (level[enemyRow][enemyColumn - 1].equals(" ")) {
+                    return Directon.LEFT;
+                } else if (level[enemyRow][enemyColumn + 1].equals(" ")) {
+                    return Directon.RIGHT;
+                } else {
+                    return Directon.DOWN;
+                }
 
-            case RIGHT: if (level[enemyRow][enemyColumn + 1].equals(" ")){
-                return Directon.RIGHT;
-            } else if (level[enemyRow - 1][enemyColumn].equals(" ")) {
-                return Directon.UP;
-            } else if (level[enemyRow + 1][enemyColumn].equals(" ")) {
-                return Directon.DOWN;
-            } else {
-                return Directon.RIGHT;
-            }
+            case RIGHT:
+                if (level[enemyRow][enemyColumn + 1].equals(" ")) {
+                    return Directon.RIGHT;
+                } else if (level[enemyRow - 1][enemyColumn].equals(" ")) {
+                    return Directon.UP;
+                } else if (level[enemyRow + 1][enemyColumn].equals(" ")) {
+                    return Directon.DOWN;
+                } else {
+                    return Directon.RIGHT;
+                }
 
-            case LEFT: if (level[enemyRow][enemyColumn - 1].equals(" ")){
-                return Directon.LEFT;
-            } else if (level[enemyRow - 1][enemyColumn].equals(" ")) {
-                return Directon.UP;
-            } else if (level[enemyRow + 1][enemyColumn].equals(" ")) {
-                return Directon.DOWN;
-            } else {
-                return Directon.LEFT;
-            }
-            default: return escapeDirection;
+            case LEFT:
+                if (level[enemyRow][enemyColumn - 1].equals(" ")) {
+                    return Directon.LEFT;
+                } else if (level[enemyRow - 1][enemyColumn].equals(" ")) {
+                    return Directon.UP;
+                } else if (level[enemyRow + 1][enemyColumn].equals(" ")) {
+                    return Directon.DOWN;
+                } else {
+                    return Directon.LEFT;
+                }
+            default:
+                return escapeDirection;
         }
     }
 
     static Directon getOppositeDirection(Directon direction) {
-
-        switch (direction){
-            case UP: return Directon.DOWN;
-            case DOWN: return Directon.UP;
-            case LEFT: return Directon.RIGHT;
-            case RIGHT: return Directon.LEFT;
-            default: return direction;
+        switch (direction) {
+            case UP:
+                return Directon.DOWN;
+            case DOWN:
+                return Directon.UP;
+            case LEFT:
+                return Directon.RIGHT;
+            case RIGHT:
+                return Directon.LEFT;
+            default:
+                return direction;
         }
     }
 
@@ -392,48 +414,48 @@ public class BasicGame {
     }
 
     static Directon changeDirectionTowards(String[][] level, Directon originalEnemyDirection, int enemyRow, int enemyColumn, int playerRow, int playerColumn) {
-    if (playerRow < enemyRow && level[enemyRow-1][enemyColumn].equals(" ")){
-        return Directon.UP;
-    }
-    if (playerRow > enemyRow && level[enemyRow+1][enemyColumn].equals(" ")){
-        return Directon.DOWN;
-    }
-    if (playerColumn < enemyColumn && level[enemyRow][enemyColumn - 1].equals(" ")){
-        return Directon.LEFT;
-    }
-    if (playerColumn > enemyColumn && level[enemyRow][enemyColumn + 1].equals(" ")){
-        return Directon.RIGHT;
-    }
+        if (playerRow < enemyRow && level[enemyRow - 1][enemyColumn].equals(" ")) {
+            return Directon.UP;
+        }
+        if (playerRow > enemyRow && level[enemyRow + 1][enemyColumn].equals(" ")) {
+            return Directon.DOWN;
+        }
+        if (playerColumn < enemyColumn && level[enemyRow][enemyColumn - 1].equals(" ")) {
+            return Directon.LEFT;
+        }
+        if (playerColumn > enemyColumn && level[enemyRow][enemyColumn + 1].equals(" ")) {
+            return Directon.RIGHT;
+        }
         return originalEnemyDirection;
     }
 
-    static void addRandomWalls(String[][] level){
+    static void addRandomWalls(String[][] level) {
         addRandomWalls(level, 10, 10);
     }
 
-    static void addRandomWalls(String[][] level, int numberOfHorizontalWalls, int numberOfVerticalWalls){
-        for (int i = 0; i < numberOfHorizontalWalls; i++){
+    static void addRandomWalls(String[][] level, int numberOfHorizontalWalls, int numberOfVerticalWalls) {
+        for (int i = 0; i < numberOfHorizontalWalls; i++) {
             addHorizontalWall(level);
         }
-        for (int i = 0; i < numberOfVerticalWalls; i++){
+        for (int i = 0; i < numberOfVerticalWalls; i++) {
             addVerticalWall(level);
         }
     }
 
-    static void addHorizontalWall(String[][] level){
-        int wallWidth = RANDOM.nextInt(WIDTH -3);
-        int wallRow = RANDOM.nextInt((HEIGHT - 2) +1 );
-        int wallColumn = RANDOM.nextInt((WIDTH - 2) - wallWidth );
-        for (int i = 0; i < wallWidth; i++){
+    static void addHorizontalWall(String[][] level) {
+        int wallWidth = RANDOM.nextInt(WIDTH - 3);
+        int wallRow = RANDOM.nextInt((HEIGHT - 2) + 1);
+        int wallColumn = RANDOM.nextInt((WIDTH - 2) - wallWidth);
+        for (int i = 0; i < wallWidth; i++) {
             level[wallRow][wallColumn + i] = "X";
         }
     }
 
-    static void addVerticalWall(String[][] level){
-        int wallHeight = RANDOM.nextInt(HEIGHT -3);
-        int wallColumn = RANDOM.nextInt((WIDTH - 2) +1 );
-        int wallRow = RANDOM.nextInt((HEIGHT - 2) - wallHeight );
-        for (int i = 0; i < wallHeight; i++){
+    static void addVerticalWall(String[][] level) {
+        int wallHeight = RANDOM.nextInt(HEIGHT - 3);
+        int wallColumn = RANDOM.nextInt((WIDTH - 2) + 1);
+        int wallRow = RANDOM.nextInt((HEIGHT - 2) - wallHeight);
+        for (int i = 0; i < wallHeight; i++) {
             level[wallRow + i][wallColumn] = "X";
         }
     }
@@ -446,7 +468,7 @@ public class BasicGame {
     static void initLevel(String[][] level) {
         for (int row = 0; row < level.length; row++) {
             for (int column = 0; column < level[row].length; column++) {
-                if (row == 0 || row == HEIGHT -1 || column == 0 || column == WIDTH -1) {
+                if (row == 0 || row == HEIGHT - 1 || column == 0 || column == WIDTH - 1) {
                     level[row][column] = "X";
                 } else {
                     level[row][column] = " ";
@@ -456,7 +478,7 @@ public class BasicGame {
     }
 
     static Directon changeDirection(Directon directon) {
-        switch (directon){
+        switch (directon) {
             case RIGHT:
                 return Directon.DOWN;
             case DOWN:
@@ -469,48 +491,49 @@ public class BasicGame {
         return directon;
     }
 
-    static void draw(String[][] board, String playerMark, int playerRow, int playerColumn, String enemyMark, int enemyRow, int enemyColumn, String powerUpMark, int powerUpRow, int powerUpColumn, boolean powerUpPresentOnLevel, boolean powerUpActive){
-         for (int row = 0; row < board.length; row++) {
-             for (int column = 0; column < board[row].length; column++) {
-                 if (row == playerRow && column == playerColumn) {
-                     System.out.print(playerMark);
-                 } else if (row == enemyRow && column == enemyColumn) {
-                     System.out.print(enemyMark);
-                 } else if (powerUpPresentOnLevel && (row == powerUpRow && column == powerUpColumn)) {
-                     System.out.print(powerUpMark);
-                 } else {
-                     System.out.print(board[row][column]);
-                 }
-             }
-             System.out.println();
-         }             if (powerUpActive) {
+    static void draw(String[][] board, String playerMark, int playerRow, int playerColumn, String enemyMark, int enemyRow, int enemyColumn, String powerUpMark, int powerUpRow, int powerUpColumn, boolean powerUpPresentOnLevel, boolean powerUpActive) {
+        for (int row = 0; row < board.length; row++) {
+            for (int column = 0; column < board[row].length; column++) {
+                if (row == playerRow && column == playerColumn) {
+                    System.out.print(playerMark);
+                } else if (row == enemyRow && column == enemyColumn) {
+                    System.out.print(enemyMark);
+                } else if (powerUpPresentOnLevel && (row == powerUpRow && column == powerUpColumn)) {
+                    System.out.print(powerUpMark);
+                } else {
+                    System.out.print(board[row][column]);
+                }
+            }
+            System.out.println();
+        }
+        if (powerUpActive) {
             System.out.println("Powerup active!");
         }
-     }
+    }
 
-     static int[] makeMove(Directon directon,String[][] level, int row, int column){
-         switch (directon){
-             case UP:
-                 if (level[row - 1][column].equals(" ")){
-                     row--;
-                 }
-                 break;
-             case DOWN:
-                 if (level[row + 1][column].equals(" ")){
-                     row++;
-                 }
-                 break;
-             case LEFT:
-                 if (level[row][column - 1].equals(" ")){
-                     column--;
-                 }
-                 break;
-             case RIGHT:
-                 if (level[row][column + 1].equals(" ")){
-                     column++;
-                 }
-                 break;
-         }
-         return new int[] {row, column};
-     }
+    static int[] makeMove(Directon directon, String[][] level, int row, int column) {
+        switch (directon) {
+            case UP:
+                if (level[row - 1][column].equals(" ")) {
+                    row--;
+                }
+                break;
+            case DOWN:
+                if (level[row + 1][column].equals(" ")) {
+                    row++;
+                }
+                break;
+            case LEFT:
+                if (level[row][column - 1].equals(" ")) {
+                    column--;
+                }
+                break;
+            case RIGHT:
+                if (level[row][column + 1].equals(" ")) {
+                    column++;
+                }
+                break;
+        }
+        return new int[]{row, column};
+    }
 }
