@@ -143,10 +143,7 @@ public class BasicGame {
             }
         }
 
-        Coordinates fartherstCorner = new Coordinates();
-        fartherstCorner.setRow(farthestRow);
-        fartherstCorner.setColumn(farthestColumn);
-        return fartherstCorner;
+        return new Coordinates(farthestRow, farthestColumn);
     }
 
     static Directon getShortestPath(String[][] level, Directon defaultDirection, Coordinates from, Coordinates to) {
@@ -360,10 +357,7 @@ public class BasicGame {
         } while (counter++ < 1_000 &&
                 (!level[randomRow][randomColumn].equals(" ") ||
                         calculateDistance(randomRow, randomColumn, playerStartingRow, playerStartingColumn) < distance));
-        Coordinates startingCoordinates = new Coordinates();
-        startingCoordinates.setRow(randomRow);
-        startingCoordinates.setColumn(randomColumn);
-        return startingCoordinates;
+        return new Coordinates(randomRow, randomColumn);
     }
 
     static int calculateDistance(int row1, int column1, int row2, int column2) {
@@ -379,10 +373,7 @@ public class BasicGame {
             randomRow = RANDOM.nextInt(HEIGHT);
             randomColumn = RANDOM.nextInt(WIDTH);
         } while (!level[randomRow][randomColumn].equals(" "));
-        Coordinates startingCoordinates = new Coordinates();
-        startingCoordinates.setRow(randomRow);
-        startingCoordinates.setColumn(randomColumn);
-        return startingCoordinates;
+        return new Coordinates(randomRow, randomColumn);
     }
 
     static Directon changeDirectionTowards(String[][] level, Directon originalEnemyDirection, int enemyRow, int enemyColumn, int playerRow, int playerColumn) {
@@ -463,33 +454,8 @@ public class BasicGame {
         return directon;
     }
 
-    static void draw(String[][] board, String playerMark, Coordinates playerCoordinates, String enemyMark, Coordinates enemyCoordinates, String powerUpMark, Coordinates powerUpCoordinates, boolean powerUpPresentOnLevel, boolean powerUpActive) {
-        for (int row = 0; row < board.length; row++) {
-            for (int column = 0; column < board[row].length; column++) {
-                Coordinates coordinatesToDraw = new Coordinates();
-                coordinatesToDraw.setRow(row);
-                coordinatesToDraw.setColumn(column);
-                 if (coordinatesToDraw.isSameAs(playerCoordinates)) {
-                    System.out.print(playerMark);
-                } else if (coordinatesToDraw.isSameAs(enemyCoordinates)) {
-                    System.out.print(enemyMark);
-                } else if (powerUpPresentOnLevel && coordinatesToDraw.isSameAs(powerUpCoordinates)) {
-                    System.out.print(powerUpMark);
-                } else {
-                    System.out.print(board[row][column]);
-                }
-            }
-            System.out.println();
-        }
-        if (powerUpActive) {
-            System.out.println("Powerup active!");
-        }
-    }
-
     static Coordinates makeMove(Directon directon, String[][] level, Coordinates oldCoordinates) {
-        Coordinates newCoordinates = new Coordinates();
-        newCoordinates.setRow(oldCoordinates.getRow());
-        newCoordinates.setColumn(oldCoordinates.getColumn());
+        Coordinates newCoordinates = new Coordinates(oldCoordinates.getRow(), oldCoordinates.getColumn());
         switch (directon) {
             case UP:
                 if (level[oldCoordinates.getRow() - 1][oldCoordinates.getColumn()].equals(" ")) {
@@ -512,5 +478,26 @@ public class BasicGame {
                 }break;
         }
         return newCoordinates;
+    }
+
+    static void draw(String[][] board, String playerMark, Coordinates playerCoordinates, String enemyMark, Coordinates enemyCoordinates, String powerUpMark, Coordinates powerUpCoordinates, boolean powerUpPresentOnLevel, boolean powerUpActive) {
+        for (int row = 0; row < board.length; row++) {
+            for (int column = 0; column < board[row].length; column++) {
+                Coordinates coordinatesToDraw = new Coordinates(row, column);
+                 if (coordinatesToDraw.isSameAs(playerCoordinates)) {
+                    System.out.print(playerMark);
+                } else if (coordinatesToDraw.isSameAs(enemyCoordinates)) {
+                    System.out.print(enemyMark);
+                } else if (powerUpPresentOnLevel && coordinatesToDraw.isSameAs(powerUpCoordinates)) {
+                    System.out.print(powerUpMark);
+                } else {
+                    System.out.print(board[row][column]);
+                }
+            }
+            System.out.println();
+        }
+        if (powerUpActive) {
+            System.out.println("Powerup active!");
+        }
     }
 }
