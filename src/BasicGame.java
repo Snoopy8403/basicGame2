@@ -18,15 +18,11 @@ public class BasicGame {
         System.out.println("Pálya inicializálások száma: " + counter);
         isPassable(level, true);
 
-        String playerMark = "O";
         Coordinates playerCoordinates = getRandomStartingCoordinates(level);
-        Coordinates playerEscapeCoordinates = getFarthestCorner(level, playerCoordinates);
-        Directon playerDirection = Directon.RIGHT;
+        Entity player = new Entity("0", playerCoordinates, getFarthestCorner(level, playerCoordinates), Directon.RIGHT);
 
-        String enemyMark = "-";
         Coordinates enemyCoordinates = getRandomStartingCoordinatesAtDistance(level, playerCoordinates, 10);
-        Coordinates enemyEscapeCoordinates = getFarthestCorner(level, enemyCoordinates);
-        Directon enemyDirection = Directon.LEFT;
+        Entity enemy = new Entity("-", enemyCoordinates, getFarthestCorner(level, enemyCoordinates), Directon.LEFT);
 
         String powerUpMark = "*";
         Coordinates powerUpCoordinates = getRandomStartingCoordinates(level);
