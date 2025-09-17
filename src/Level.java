@@ -60,9 +60,9 @@ public class Level {
         return isPassable(false);
     }
 
-    private boolean isPassable(boolean draw) {
+    public boolean isPassable(boolean draw) {
         //PÁLYA lemásolása
-        String[][] levelCopy = copy();
+        String[][] levelCopy = copy(level);
 
         //Első szóköz és csillaggal helyettesítése
         outer:
@@ -153,7 +153,7 @@ public class Level {
         return changed;
     }
 
-    private String[][] copy() {
+    private String[][] copy(String[][] level) {
         String[][] copy = new String[height][width];
         for (int row = 0; row < height; row++) {
             for (int column = 0; column < width; column++) {
@@ -161,5 +161,61 @@ public class Level {
             }
         }
         return copy;
+    }
+
+    public boolean isEmpty(Coordinates coordinates) {
+        return " ".equals(level[coordinates.getRow()][coordinates.getColumn()]);
+    }
+
+    public Coordinates getFarthestCorner(Coordinates from) {
+        String[][] levelCopy = copy(level);
+        levelCopy[from.getRow()][from.getColumn()] = "*";
+
+        int farthestRow = 0;
+        int farthestColumn = 0;
+        while (isSpreadAsterixWithCheck(levelCopy)) {
+            outer:
+            for (int row = 0; row < height; row++) {
+                for (int column = 0; column < width; column++) {
+                    if (" ".equals(levelCopy[row][column])) {
+                        farthestRow = row;
+                        farthestColumn = column;
+                        break outer;
+                    }
+                }
+            }
+        }
+
+        return new Coordinates(farthestRow, farthestColumn);
+    }
+
+    public Directon getShortestPath(Directon defaultDirection, Coordinates from, Coordinates to) {
+        //PÁLYA lemásolása
+        String[][] levelCopy = copy(level);
+
+        //Első csillag lehelyezése a célpontra
+        levelCopy[to.getRow()][to.getColumn()] = "*";
+
+        //csillagok terjesztése
+        while (isSpreadAsterixWithCheck(levelCopy)) {
+
+            if ("*".equals(levelCopy[from.getRow() - 1][from.getColumn()])) {
+                return Directon.UP;
+            }
+            if ("*".equals(levelCopy[from.getRow() + 1][from.getColumn()])) {
+                return Directon.DOWN;
+            }
+            if ("*".equals(levelCopy[from.getRow()][from.getColumn() - 1])) {
+                return Directon.LEFT;
+            }
+            if ("*".equals(levelCopy[from.getRow()][from.getColumn() + 1])) {
+                return Directon.RIGHT;
+            }
+        }
+        return defaultDirection;
+    }
+
+    public String getCell(Coordinates coordinates) {
+        return level[coordinates.getRow()][coordinates.getColumn()];
     }
 }

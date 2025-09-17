@@ -26,4 +26,10 @@ public class Coordinates {
     public boolean isSameAs(Coordinates other){
         return this.row == other.row && this.column == other.column;
     }
+
+    public int distanceFrom(Coordinates other) {
+        int rowDifference = Math.abs(row - other.row);
+        int columnDifference = Math.abs(column - other.column);
+        return rowDifference + columnDifference;
+    }
 }

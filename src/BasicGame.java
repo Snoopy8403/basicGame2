@@ -8,27 +8,21 @@ public class BasicGame {
 
     public static void main(String[] args) throws InterruptedException {
 
-        Level level = new Level(RANDOM, HEIGHT, WIDTH);
+        Level level;
         int counter = 0;
         do {
+            level = new Level(RANDOM, HEIGHT, WIDTH);
             level.addRandomWalls();
-        }while (!isPassable(level));
+        }while (!level.isPassable());
 
-
-        String[][] level = new String[HEIGHT][WIDTH];
-        int counter = 0;
-        do {
-            addRandomWalls(level);
-            counter++;
-        } while (!isPassable(level));
         System.out.println("Pálya inicializálások száma: " + counter);
-        isPassable(level, true);
+        level.isPassable(true);
 
         Coordinates playerCoordinates = getRandomStartingCoordinates(level);
-        Entity player = new Entity("0", playerCoordinates, getFarthestCorner(level, playerCoordinates), Directon.RIGHT);
+        Entity player = new Entity("0", playerCoordinates, level.getFarthestCorner(playerCoordinates), Directon.RIGHT);
 
         Coordinates enemyCoordinates = getRandomStartingCoordinatesAtDistance(level, player.getCoordinates(), 10);
-        Entity enemy = new Entity("-", enemyCoordinates, getFarthestCorner(level, enemyCoordinates), Directon.LEFT);
+        Entity enemy = new Entity("-", enemyCoordinates, level.getFarthestCorner(enemyCoordinates), Directon.LEFT);
 
         String powerUpMark = "*";
         Coordinates powerUpCoordinates = getRandomStartingCoordinates(level);
@@ -42,15 +36,15 @@ public class BasicGame {
         for (int iteracionNumber = 1; iteracionNumber <= GAME_LOOP_NUMBER; iteracionNumber++) {
             //Player irányváltás
             if (powerUpActive) {
-                player.setDirection(getShortestPath(level, player.getDirection(), player.getCoordinates(), enemy.getCoordinates()));
+                player.setDirection(level.getShortestPath(player.getDirection(), player.getCoordinates(), enemy.getCoordinates()));
             } else {
                 if (powerUpPresentOnLevel) {
-                    player.setDirection(getShortestPath(level, player.getDirection(), player.getCoordinates(), powerUpCoordinates));
+                    player.setDirection(level.getShortestPath(player.getDirection(), player.getCoordinates(), powerUpCoordinates));
                 } else {
                     if (iteracionNumber % 100 == 0) {
-                        player.setEscapeCoordinates(getFarthestCorner(level, player.getCoordinates()));
+                        player.setEscapeCoordinates(level.getFarthestCorner(player.getCoordinates()));
                     }
-                    player.setDirection(getShortestPath(level, player.getDirection(), player.getCoordinates(), player.getEscapeCoordinates()));
+                    player.setDirection(level.getShortestPath(player.getDirection(), player.getCoordinates(), player.getEscapeCoordinates()));
                 }
             }
             player.setCoordinates(makeMove(player.getDirection(), level, player.getCoordinates()));
@@ -58,11 +52,11 @@ public class BasicGame {
             //Ellenfél irányváltás
             if (powerUpActive) {
                 if (iteracionNumber % 100 == 0) {
-                    enemy.setEscapeCoordinates(getFarthestCorner(level, enemy.getCoordinates()));
+                    enemy.setEscapeCoordinates(level.getFarthestCorner(enemy.getCoordinates()));
                 }
-                enemy.setDirection(getShortestPath(level, enemy.getDirection(), enemy.getCoordinates(), enemy.getEscapeCoordinates()));
+                enemy.setDirection(level.getShortestPath(enemy.getDirection(), enemy.getCoordinates(), enemy.getEscapeCoordinates()));
             } else {
-                enemy.setDirection(getShortestPath(level, enemy.getDirection(), enemy.getCoordinates(), player.getCoordinates()));
+                enemy.setDirection(level.getShortestPath(enemy.getDirection(), enemy.getCoordinates(), player.getCoordinates()));
             }
             if (iteracionNumber % 2 == 0) {
                 enemy.setCoordinates(makeMove(enemy.getDirection(), level, enemy.getCoordinates()));
@@ -85,7 +79,7 @@ public class BasicGame {
                 powerUpActive = false;
                 powerUpActiveCounter = 0;
                 powerUpCoordinates = getRandomStartingCoordinates(level);
-                player.setEscapeCoordinates(getFarthestCorner(level, player.getCoordinates()));
+                player.setEscapeCoordinates(level.getFarthestCorner(player.getCoordinates()));
             }
 
             //power up interaction the player
@@ -93,7 +87,7 @@ public class BasicGame {
                 powerUpActive = true;
                 powerUpPresentOnLevel = false;
                 powerUpActiveCounter = 0;
-                enemy.setEscapeCoordinates(getFarthestCorner(level, enemy.getCoordinates()));
+                enemy.setEscapeCoordinates(level.getFarthestCorner(enemy.getCoordinates()));
             }
 
             //Pálya és játékos kirajzolása
@@ -124,54 +118,6 @@ public class BasicGame {
                 System.out.println("Döntetlen");
                 break;
         }
-    }
-
-    private static Coordinates getFarthestCorner(String[][] level, Coordinates from) {
-        String[][] levelCopy = copy(level);
-        levelCopy[from.getRow()][from.getColumn()] = "*";
-
-        int farthestRow = 0;
-        int farthestColumn = 0;
-        while (isSpreadAsterixWithCheck(levelCopy)) {
-            outer:
-            for (int row = 0; row < HEIGHT; row++) {
-                for (int column = 0; column < WIDTH; column++) {
-                    if (" ".equals(levelCopy[row][column])) {
-                        farthestRow = row;
-                        farthestColumn = column;
-                        break outer;
-                    }
-                }
-            }
-        }
-
-        return new Coordinates(farthestRow, farthestColumn);
-    }
-
-    static Directon getShortestPath(String[][] level, Directon defaultDirection, Coordinates from, Coordinates to) {
-        //PÁLYA lemásolása
-        String[][] levelCopy = copy(level);
-
-        //Első csillag lehelyezése a célpontra
-        levelCopy[to.getRow()][to.getColumn()] = "*";
-
-        //csillagok terjesztése
-        while (isSpreadAsterixWithCheck(levelCopy)) {
-
-            if ("*".equals(levelCopy[from.getRow() - 1][from.getColumn()])) {
-                return Directon.UP;
-            }
-            if ("*".equals(levelCopy[from.getRow() + 1][from.getColumn()])) {
-                return Directon.DOWN;
-            }
-            if ("*".equals(levelCopy[from.getRow()][from.getColumn() - 1])) {
-                return Directon.LEFT;
-            }
-            if ("*".equals(levelCopy[from.getRow()][from.getColumn() + 1])) {
-                return Directon.RIGHT;
-            }
-        }
-        return defaultDirection;
     }
 
     static Directon getEscapeDirection(String[][] level, int enemyRow, int enemyColumn, Directon directionTowardsPlayer) {
@@ -240,35 +186,21 @@ public class BasicGame {
         }
     }
 
-    static Coordinates getRandomStartingCoordinatesAtDistance(String[][] level, Coordinates playerStartingCoordinates, int distance) {
-        int playerStartingRow = playerStartingCoordinates.getRow();
-        int playerStartingColumn = playerStartingCoordinates.getColumn();
-        int randomRow;
-        int randomColumn;
+    static Coordinates getRandomStartingCoordinates(Level level) {
+        Coordinates randomCoordinates;
+        do {
+            randomCoordinates = new Coordinates(RANDOM.nextInt(HEIGHT), RANDOM.nextInt(WIDTH));
+        } while(!level.isEmpty(randomCoordinates));
+        return randomCoordinates;
+    }
+
+    static Coordinates getRandomStartingCoordinatesAtDistance(Level level, Coordinates playerStartingCoordinates, int distance) {
+        Coordinates randomCoordinates;
         int counter = 0;
         do {
-            randomRow = RANDOM.nextInt(HEIGHT);
-            randomColumn = RANDOM.nextInt(WIDTH);
-        } while (counter++ < 1_000 &&
-                (!level[randomRow][randomColumn].equals(" ") ||
-                        calculateDistance(randomRow, randomColumn, playerStartingRow, playerStartingColumn) < distance));
-        return new Coordinates(randomRow, randomColumn);
-    }
-
-    static int calculateDistance(int row1, int column1, int row2, int column2) {
-        int rowDifference = Math.abs(row1 - row2);
-        int columnDifference = Math.abs(column1 - column2);
-        return rowDifference + columnDifference;
-    }
-
-    static Coordinates getRandomStartingCoordinates(String[][] level) {
-        int randomRow;
-        int randomColumn;
-        do {
-            randomRow = RANDOM.nextInt(HEIGHT);
-            randomColumn = RANDOM.nextInt(WIDTH);
-        } while (!level[randomRow][randomColumn].equals(" "));
-        return new Coordinates(randomRow, randomColumn);
+            randomCoordinates = getRandomStartingCoordinates(level);
+        } while (counter++ < 1_000 && randomCoordinates.distanceFrom(playerStartingCoordinates) < distance);
+        return randomCoordinates;
     }
 
     static Directon changeDirectionTowards(String[][] level, Directon originalEnemyDirection, int enemyRow, int enemyColumn, int playerRow, int playerColumn) {
@@ -286,8 +218,6 @@ public class BasicGame {
         }
         return originalEnemyDirection;
     }
-
-
 
     static void addSomeDelay(int k, long timeOut) throws InterruptedException {
         System.out.println(k + " --------------");
@@ -308,35 +238,35 @@ public class BasicGame {
         return directon;
     }
 
-    static Coordinates makeMove(Directon directon, String[][] level, Coordinates oldCoordinates) {
+    static Coordinates makeMove(Directon directon, Level level, Coordinates oldCoordinates) {
         Coordinates newCoordinates = new Coordinates(oldCoordinates.getRow(), oldCoordinates.getColumn());
         switch (directon) {
             case UP:
-                if (level[oldCoordinates.getRow() - 1][oldCoordinates.getColumn()].equals(" ")) {
+                if (level.isEmpty(new Coordinates(oldCoordinates.getRow() - 1, oldCoordinates.getColumn()))){
                     newCoordinates.setRow(oldCoordinates.getRow()-1);
-                }
+            }
                 break;
             case DOWN:
-                if (level[oldCoordinates.getRow() + 1][oldCoordinates.getColumn()].equals(" ")) {
+                if (level.isEmpty(new Coordinates(oldCoordinates.getRow() + 1, oldCoordinates.getColumn()))) {
                     newCoordinates.setRow(oldCoordinates.getRow()+1);
                 }
                 break;
             case LEFT:
-                if (level[oldCoordinates.getRow()][oldCoordinates.getColumn() - 1].equals(" ")) {
+                if (level.isEmpty(new Coordinates(oldCoordinates.getRow(), oldCoordinates.getColumn() - 1))) {
                     newCoordinates.setColumn(oldCoordinates.getColumn()-1);
                 }
                 break;
             case RIGHT:
-                if (level[oldCoordinates.getRow()][oldCoordinates.getColumn() + 1].equals(" ")) {
+                if (level.isEmpty(new Coordinates(oldCoordinates.getRow(), oldCoordinates.getColumn() + 1))) {
                     newCoordinates.setColumn(oldCoordinates.getColumn()+1);
                 }break;
         }
         return newCoordinates;
     }
 
-    static void draw(String[][] board, String playerMark, Coordinates playerCoordinates, String enemyMark, Coordinates enemyCoordinates, String powerUpMark, Coordinates powerUpCoordinates, boolean powerUpPresentOnLevel, boolean powerUpActive) {
-        for (int row = 0; row < board.length; row++) {
-            for (int column = 0; column < board[row].length; column++) {
+    static void draw(Level level, String playerMark, Coordinates playerCoordinates, String enemyMark, Coordinates enemyCoordinates, String powerUpMark, Coordinates powerUpCoordinates, boolean powerUpPresentOnLevel, boolean powerUpActive) {
+        for (int row = 0; row < HEIGHT; row++) {
+            for (int column = 0; column < WIDTH; column++) {
                 Coordinates coordinatesToDraw = new Coordinates(row, column);
                  if (coordinatesToDraw.isSameAs(playerCoordinates)) {
                     System.out.print(playerMark);
@@ -345,7 +275,7 @@ public class BasicGame {
                 } else if (powerUpPresentOnLevel && coordinatesToDraw.isSameAs(powerUpCoordinates)) {
                     System.out.print(powerUpMark);
                 } else {
-                    System.out.print(board[row][column]);
+                    System.out.print(level.getCell(coordinatesToDraw));
                 }
             }
             System.out.println();
