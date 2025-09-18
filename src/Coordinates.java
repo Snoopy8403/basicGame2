@@ -7,6 +7,10 @@ public class Coordinates {
         this.column = column;
     }
 
+    public Coordinates(Coordinates other){
+        this(other.getRow(), other.getColumn());
+    }
+
     public int getRow() {
         return row;
     }

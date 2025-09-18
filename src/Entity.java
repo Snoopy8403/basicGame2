@@ -2,14 +2,12 @@ public class Entity {
 
     private String mark;
     private Coordinates coordinates;
-    private Coordinates escapeCoordinates;
-    private Directon direction;
+    private Level level;
 
-    public Entity(String mark, Coordinates coordinates, Coordinates escapeCoordinates, Directon direction) {
+    public Entity(String mark, Coordinates coordinates, Level level) {
         this.mark = mark;
         this.coordinates = coordinates;
-        this.escapeCoordinates = escapeCoordinates;
-        this.direction = direction;
+        this.level = level;
     }
 
     public String getMark() {
@@ -28,19 +26,11 @@ public class Entity {
         this.coordinates = coordinates;
     }
 
-    public Coordinates getEscapeCoordinates() {
-        return escapeCoordinates;
+    public Level getLevel() {
+        return level;
     }
 
-    public void setEscapeCoordinates(Coordinates escapeCoordinates) {
-        this.escapeCoordinates = escapeCoordinates;
-    }
-
-    public Directon getDirection() {
-        return direction;
-    }
-
-    public void setDirection(Directon direction) {
-        this.direction = direction;
+    public boolean update(){
+        return false;
     }
 }

@@ -218,4 +218,21 @@ public class Level {
     public String getCell(Coordinates coordinates) {
         return level[coordinates.getRow()][coordinates.getColumn()];
     }
+
+    public Coordinates getRandomCoordinates() {
+        Coordinates randomCoordinates;
+        do {
+            randomCoordinates = new Coordinates(RANDOM.nextInt(height), RANDOM.nextInt(width));
+        } while(!isEmpty(randomCoordinates));
+        return randomCoordinates;
+    }
+
+    public Coordinates getRandomCoordinatesAtDistance(Coordinates coordinates, int distance) {
+        Coordinates randomCoordinates;
+        int counter = 0;
+        do {
+            randomCoordinates = getRandomCoordinates();
+        } while (counter++ < 1_000 && randomCoordinates.distanceFrom(coordinates) < distance);
+        return randomCoordinates;
+    }
 }
