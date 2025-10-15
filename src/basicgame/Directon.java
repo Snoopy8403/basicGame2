@@ -1,3 +1,5 @@
+package basicgame;
+
 public enum Directon {
     LEFT,
     RIGHT,

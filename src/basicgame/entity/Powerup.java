@@ -1,4 +1,9 @@
-public class Powerup extends Entity {
+package basicgame.entity;
+
+import basicgame.Coordinates;
+import basicgame.Level;
+
+public class Powerup extends BasicEntity {
 
     private boolean presentOnLevel;
     private int presentsCounter;

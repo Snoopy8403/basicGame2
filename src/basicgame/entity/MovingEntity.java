@@ -1,4 +1,10 @@
-public class MovingEntity extends Entity {
+package basicgame.entity;
+
+import basicgame.Coordinates;
+import basicgame.Directon;
+import basicgame.Level;
+
+public class MovingEntity extends BasicEntity {
 
     private Coordinates escapeCoordinates;
     private Directon direction;
@@ -49,6 +55,7 @@ public class MovingEntity extends Entity {
                 }
                 break;
         }
+        setCoordinates(newCoordinates);
         return false;
     }
 }

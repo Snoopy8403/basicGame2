@@ -1,10 +1,15 @@
-public class Entity {
+package basicgame.entity;
+
+import basicgame.Coordinates;
+import basicgame.Level;
+
+public class BasicEntity implements Entity {
 
     private String mark;
     private Coordinates coordinates;
     private Level level;
 
-    public Entity(String mark, Coordinates coordinates, Level level) {
+    public BasicEntity(String mark, Coordinates coordinates, Level level) {
         this.mark = mark;
         this.coordinates = coordinates;
         this.level = level;

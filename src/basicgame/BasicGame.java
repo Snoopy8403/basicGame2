@@ -1,3 +1,9 @@
+package basicgame;
+
+import basicgame.entity.BasicEntity;
+import basicgame.entity.MovingEntity;
+import basicgame.entity.Powerup;
+
 import java.util.Random;
 
 public class BasicGame {
@@ -8,14 +14,13 @@ public class BasicGame {
     static final Random RANDOM = new Random(100L);
 
     public static void main(String[] args) throws InterruptedException {
-
         Level level;
         int counter = 0;
         do {
             level = new Level(RANDOM, HEIGHT, WIDTH);
             level.addRandomWalls();
+            counter++;
         } while (!level.isPassable());
-
         System.out.println("Pálya inicializálások száma: " + counter);
         level.isPassable(true);
 
@@ -105,7 +110,7 @@ public class BasicGame {
         Thread.sleep(timeOut);
     }
 
-    static void draw(Level level, Entity player, Entity enemy, Powerup powerup) {
+    static void draw(Level level, BasicEntity player, BasicEntity enemy, Powerup powerup) {
         for (int row = 0; row < HEIGHT; row++) {
             for (int column = 0; column < WIDTH; column++) {
                 Coordinates coordinatesToDraw = new Coordinates(row, column);
@@ -122,7 +127,7 @@ public class BasicGame {
             System.out.println();
         }
         if (powerup.isActive()) {
-            System.out.println("Powerup active!");
+            System.out.println("basicgame.entity.Powerup active!");
         }
     }
 }

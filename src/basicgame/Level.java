@@ -1,3 +1,5 @@
+package basicgame;
+
 import java.util.Random;
 
 public class Level {
