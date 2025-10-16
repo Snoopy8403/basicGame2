@@ -1,8 +1,6 @@
 package basicgame;
 
-import basicgame.entity.BasicEntity;
-import basicgame.entity.MovingEntity;
-import basicgame.entity.Powerup;
+import basicgame.entity.*;
 
 import java.util.Random;
 
@@ -25,10 +23,10 @@ public class BasicGame {
         level.isPassable(true);
 
         Coordinates playerCoordinates = level.getRandomCoordinates();
-        MovingEntity player = new MovingEntity("0", playerCoordinates, level.getFarthestCorner(playerCoordinates), Directon.RIGHT, level);
+        MovingEntity player = new Player("0", playerCoordinates, level.getFarthestCorner(playerCoordinates), Directon.RIGHT, level);
 
         Coordinates enemyCoordinates = level.getRandomCoordinatesAtDistance(player.getCoordinates(), 10);
-        MovingEntity enemy = new MovingEntity("-", enemyCoordinates, level.getFarthestCorner(enemyCoordinates), Directon.LEFT, level);
+        MovingEntity enemy = new Enemy("-", enemyCoordinates, level.getFarthestCorner(enemyCoordinates), Directon.LEFT, level);
 
         Powerup powerup = new Powerup("*", level.getRandomCoordinates(), level);
 
